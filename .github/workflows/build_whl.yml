@@ -28,6 +28,10 @@ jobs:
              python -m pip install --upgrade poetry-core>=1.0.0
              python -m pip install --upgrade setuptools
              python -m pip install --upgrade cython
+      - name: set_environ
+        run: |
+             path=%path%;%USERPROFILE%\.poetry\bin
+        if: runner.os == 'Windows'
       - name: build_whl
         run: |
              poetry build
