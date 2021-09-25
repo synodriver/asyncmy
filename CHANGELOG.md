@@ -2,6 +2,10 @@
 
 ## 0.2
 
+### 0.2.1
+
+- Fix `binlogstream` await. (#12)
+
 ### 0.2.0
 
 - Fix `cursor.close`.
