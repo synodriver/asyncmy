@@ -1,8 +1,9 @@
 import binascii
 import re
-import struct
 from io import BytesIO
 from typing import Set, Union
+
+import xstruct as struct
 
 
 class Gtid:
@@ -30,7 +31,8 @@ class Gtid:
     @staticmethod
     def parse(gtid: str):
         m = re.search(
-            "^([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})" "((?::[0-9-]+)+)$", gtid
+            "^([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})" "((?::[0-9-]+)+)$",
+            gtid,
         )
         if not m:
             raise ValueError("GTID format is incorrect: %r" % (gtid,))

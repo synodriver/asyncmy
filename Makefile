@@ -1,26 +1,28 @@
-checkfiles = asyncmy/ tests/ examples/ conftest.py
-black_opts = -l 100 -t py38
+checkfiles = asyncmy/ tests/ examples/ conftest.py build.py
 py_warn = PYTHONDEVMODE=1
 MYSQL_PASS ?= "123456"
 
 up:
 	@poetry update
 
-deps:
+deps: 
 	@poetry install
 
 style: deps
-	isort -src $(checkfiles)
-	black $(black_opts) $(checkfiles)
+	poetry run isort -src $(checkfiles)
+	poetry run black $(checkfiles)
 
 check: deps
-	black --check $(black_opts) $(checkfiles) || (echo "Please run 'make style' to auto-fix style issues" && false)
-	flake8 $(checkfiles)
-	bandit -x tests -r $(checkfiles)
-	mypy $(checkfiles)
+	poetry run black --check $(checkfiles) || (echo "Please run 'make style' to auto-fix style issues" && false)
+	poetry run flake8 $(checkfiles)
+	poetry run bandit -x tests -r $(checkfiles)
+	poetry run mypy $(checkfiles)
 
 test: deps
-	$(py_warn) MYSQL_PASS=$(MYSQL_PASS) pytest
+	$(py_warn) MYSQL_PASS=$(MYSQL_PASS) poetry run pytest
+
+clean:
+	@rm -rf *.so && rm -rf build && rm -rf dist && rm -rf asyncmy/*.c && rm -rf asyncmy/*.so
 
 build: deps
 	@poetry build

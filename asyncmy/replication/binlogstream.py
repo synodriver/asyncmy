@@ -1,6 +1,6 @@
-import struct
 from typing import Any, Dict, List, Optional, Set, Type, Union
 
+import xstruct as struct
 from asyncmy import Connection
 from asyncmy.constants.COMMAND import COM_BINLOG_DUMP, COM_BINLOG_DUMP_GTID, COM_REGISTER_SLAVE
 from asyncmy.cursors import DictCursor
@@ -141,7 +141,11 @@ class BinLogStream:
         self._allowed_events = self._allowed_event_list(
             only_events, ignored_events, filter_non_implemented_events
         )
-        self._allowed_events_in_packet = [TableMapEvent, RotateEvent, *self._allowed_events]
+        self._allowed_events_in_packet = [
+            TableMapEvent,
+            RotateEvent,
+            *self._allowed_events,
+        ]
         self._table_map: Dict[str, Any] = {}
 
     @staticmethod

@@ -1,5 +1,3 @@
-import struct
-
 from .constants.ER import *
 from .structs import H
 

@@ -1,7 +1,7 @@
 import datetime
 import decimal
-import struct
 
+import xstruct as struct
 from asyncmy.charset import charset_by_name
 from asyncmy.constants.FIELD_TYPE import (
     BIT,
@@ -180,7 +180,8 @@ class RowsEvent(BinLogEvent):
                 values[name] = self.__read_time2(column)
             elif column.type == TIMESTAMP2:
                 values[name] = self.__add_fsp_to_time(
-                    datetime.datetime.fromtimestamp(self.packet.read_int_be_by_size(4)), column
+                    datetime.datetime.fromtimestamp(self.packet.read_int_be_by_size(4)),
+                    column,
                 )
             elif column.type == LONGLONG:
                 if unsigned:
@@ -276,7 +277,9 @@ class RowsEvent(BinLogEvent):
     def __read_time(self):
         time = self.packet.read_uint24()
         date = datetime.timedelta(
-            hours=int(time / 10000), minutes=int((time % 10000) / 100), seconds=int(time % 100)
+            hours=int(time / 10000),
+            minutes=int((time % 10000) / 100),
+            seconds=int(time % 100),
         )
         return date
 
@@ -610,5 +613,9 @@ class TableMapEvent(BinLogEvent):
                 self.columns.append(col)
 
         self._table = Table(
-            self.column_schemas, self.table_id, self.schema, self.table_name, self.columns
+            self.column_schemas,
+            self.table_id,
+            self.schema,
+            self.table_name,
+            self.columns,
         )

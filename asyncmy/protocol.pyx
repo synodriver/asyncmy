@@ -1,4 +1,3 @@
-import struct
 
 from .constants.COLUMN import (NULL_COLUMN, UNSIGNED_CHAR_COLUMN,
                                UNSIGNED_INT24_COLUMN, UNSIGNED_INT64_COLUMN,
@@ -21,7 +20,6 @@ cdef class MysqlPacket:
         int _position
 
     def __init__(self, bytes data, str encoding):
-
         self._position = 0
         self._data = data
 
@@ -147,7 +145,7 @@ cdef class MysqlPacket:
         that many bytes of binary data.  (For example "cat" would be "3cat".)
         """
         length = self.read_length_encoded_integer()
-        if length is None:
+        if length == 0:
             return b""
         return self.read(length)
 

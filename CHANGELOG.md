@@ -5,6 +5,8 @@
 ### 0.2.1
 
 - Fix `binlogstream` await. (#12)
+- Remove `loop` argument. (#15)
+- Fix `unix_socket` connect. (#17)
 
 ### 0.2.0
 
