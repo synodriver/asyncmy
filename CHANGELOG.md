@@ -2,6 +2,12 @@
 
 ## 0.2
 
+### 0.2.3
+
+- Fix `escape_sequence`. (#20)
+- Fix `connection.autocommit`. (#21)
+- Fix `_clear_result`. (#22)
+
 ### 0.2.2
 
 - Fix bug. (#18)
