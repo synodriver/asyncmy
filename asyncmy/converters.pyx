@@ -45,7 +45,7 @@ cpdef escape_set(set val, str charset, mapping=None):
 cpdef escape_bool(int value, mapping=None):
     return str(int(value))
 
-cpdef escape_int(long value, mapping=None):
+cpdef escape_int(long long value, mapping=None):
     return str(value)
 
 def escape_float(value, mapping=None):
@@ -65,7 +65,7 @@ _escape_table[ord("\032")] = "\\Z"
 _escape_table[ord('"')] = '\\"'
 _escape_table[ord("'")] = "\\'"
 
-cpdef str escape_string(str value, mapping=None):
+cpdef str escape_string(value, mapping=None):
     """
     escapes *value* without adding quote.
 
@@ -79,7 +79,7 @@ cpdef str escape_bytes_prefixed(bytes value, mapping=None):
 cpdef str escape_bytes(bytes value, mapping=None):
     return "'%s'" % value.decode(b"ascii", "surrogateescape").translate(_escape_table)
 
-cpdef str escape_str(str value, mapping=None):
+cpdef str escape_str(value, mapping=None):
     return "'%s'" % escape_string(str(value), mapping)
 
 cpdef str escape_None(value, mapping=None):
