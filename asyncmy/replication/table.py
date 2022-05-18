@@ -10,7 +10,7 @@ class Table:
     ):
         if primary_key is None:
             primary_key = [c.data["name"] for c in columns if c.data["is_primary"]]
-            if len(primary_key) == 0:
+            if not primary_key:
                 primary_key = ""
             elif len(primary_key) == 1:
                 (primary_key,) = primary_key
@@ -30,4 +30,4 @@ class Table:
 
     @property
     def data(self):
-        return dict((k, v) for (k, v) in self.__dict__.items() if not k.startswith("_"))
+        return {k: v for (k, v) in self.__dict__.items() if not k.startswith("_")}

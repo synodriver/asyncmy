@@ -82,11 +82,11 @@ class RowsEvent(BinLogEvent):
             return
 
         # Event V2
-        if (
-            self.event_type == WRITE_ROWS_EVENT_V2
-            or self.event_type == DELETE_ROWS_EVENT_V2
-            or self.event_type == UPDATE_ROWS_EVENT_V2
-        ):
+        if self.event_type in [
+            WRITE_ROWS_EVENT_V2,
+            DELETE_ROWS_EVENT_V2,
+            UPDATE_ROWS_EVENT_V2,
+        ]:
             self.flags, self.extra_data_length = struct.unpack("<HH", self.packet.read(4))
             self.extra_data = self.packet.read(self.extra_data_length / 8)
         else:
@@ -120,7 +120,7 @@ class RowsEvent(BinLogEvent):
 
         null_bitmap_index = 0
         nb_columns = len(self.columns)
-        for i in range(0, nb_columns):
+        for i in range(nb_columns):
             column = self.columns[i]
             name = self.table_map[self.table_id].columns[i].name
             unsigned = self.table_map[self.table_id].columns[i].unsigned
@@ -155,7 +155,7 @@ class RowsEvent(BinLogEvent):
                 values[name] = struct.unpack("<f", self.packet.read(4))[0]
             elif column.type == DOUBLE:
                 values[name] = struct.unpack("<d", self.packet.read(8))[0]
-            elif column.type == VARCHAR or column.type == STRING:
+            elif column.type in [VARCHAR, STRING]:
                 if column.max_length > 255:
                     values[name] = self.__read_string(2, column)
                 else:
@@ -173,7 +173,6 @@ class RowsEvent(BinLogEvent):
             elif column.type == TIMESTAMP:
                 values[name] = datetime.datetime.fromtimestamp(self.packet.read_uint32())
 
-            # For new date format:
             elif column.type == DATETIME2:
                 values[name] = self.__read_datetime2(column)
             elif column.type == TIME2:
@@ -196,10 +195,12 @@ class RowsEvent(BinLogEvent):
                 # We read set columns as a bitmap telling us which options
                 # are enabled
                 bit_mask = self.packet.read_uint_by_size(column.size)
-                values[name] = (
-                    set(val for idx, val in enumerate(column.set_values) if bit_mask & 2 ** idx)
-                    or None
-                )
+                values[name] = {
+                    val
+                    for idx, val in enumerate(column.set_values)
+                    if bit_mask & 2**idx
+                } or None
+
 
             elif column.type == BIT:
                 values[name] = self.__read_bit(column)
@@ -226,11 +227,11 @@ class RowsEvent(BinLogEvent):
 
     def __read_fsp(self, column):
         read = 0
-        if column.fsp == 1 or column.fsp == 2:
+        if column.fsp in [1, 2]:
             read = 1
-        elif column.fsp == 3 or column.fsp == 4:
+        elif column.fsp in [3, 4]:
             read = 2
-        elif column.fsp == 5 or column.fsp == 6:
+        elif column.fsp in [5, 6]:
             read = 3
         if read > 0:
             microsecond = self.packet.read_int_be_by_size(read)
@@ -254,8 +255,7 @@ class RowsEvent(BinLogEvent):
     def __read_bit(self, column):
         """Read MySQL BIT type"""
         resp = ""
-        for byte in range(0, column.bytes):
-            current_byte = ""
+        for byte in range(column.bytes):
             data = self.packet.read_uint8()
             if byte == 0:
                 if column.bytes == 1:
@@ -266,22 +266,17 @@ class RowsEvent(BinLogEvent):
                         end = 8
             else:
                 end = 8
-            for bit in range(0, end):
-                if data & (1 << bit):
-                    current_byte += "1"
-                else:
-                    current_byte += "0"
+            current_byte = "".join("1" if data & (1 << bit) else "0" for bit in range(end))
             resp += current_byte[::-1]
         return resp
 
     def __read_time(self):
         time = self.packet.read_uint24()
-        date = datetime.timedelta(
+        return datetime.timedelta(
             hours=int(time / 10000),
             minutes=int((time % 10000) / 100),
             seconds=int(time % 100),
         )
-        return date
 
     def __read_time2(self, column):
         """TIME encoding for nonfractional part:
@@ -302,13 +297,12 @@ class RowsEvent(BinLogEvent):
             # hence take 2's compliment again to get the right value.
             data = ~data + 1
 
-        t = datetime.timedelta(
+        return datetime.timedelta(
             hours=sign * self._read_binary_slice(data, 2, 10, 24),
             minutes=self._read_binary_slice(data, 12, 6, 24),
             seconds=self._read_binary_slice(data, 18, 6, 24),
             microseconds=self.__read_fsp(column),
         )
-        return t
 
     def __read_date(self):
         time = self.packet.read_uint24()
@@ -321,8 +315,7 @@ class RowsEvent(BinLogEvent):
         if year == 0 or month == 0 or day == 0:
             return None
 
-        date = datetime.date(year=year, month=month, day=day)
-        return date
+        return datetime.date(year=year, month=month, day=day)
 
     def __read_datetime(self):
         value = self.packet.read_uint64()
@@ -342,10 +335,11 @@ class RowsEvent(BinLogEvent):
             year=year,
             month=month,
             day=day,
-            hour=int(time / 10000),
+            hour=time // 10000,
             minute=int((time % 10000) / 100),
             second=int(time % 100),
         )
+
         return date
 
     def __read_datetime2(self, column):
@@ -408,13 +402,13 @@ class RowsEvent(BinLogEvent):
             value = self.packet.read_int_be_by_size(size) ^ mask
             res += str(value)
 
-        for i in range(0, uncomp_integral):
+        for _ in range(uncomp_integral):
             value = struct.unpack(">i", self.packet.read(4))[0] ^ mask
             res += "%09d" % value
 
         res += "."
 
-        for i in range(0, uncomp_fractional):
+        for _ in range(uncomp_fractional):
             value = struct.unpack(">i", self.packet.read(4))[0] ^ mask
             res += "%09d" % value
 
@@ -509,12 +503,10 @@ class UpdateRowsEvent(RowsEvent):
             self.columns_present_bitmap2 = self.packet.read((self.number_of_columns + 7) / 8)
 
     def _fetch_one_row(self):
-        row = {
+        return {
             "before_values": self._read_column_data(self.columns_present_bitmap),
             "after_values": self._read_column_data(self.columns_present_bitmap2),
         }
-
-        return row
 
 
 class TableMapEvent(BinLogEvent):
@@ -578,13 +570,13 @@ class TableMapEvent(BinLogEvent):
             self.column_schemas = await (
                 await self._connection._get_table_information(self.schema, self.table_name)
             )
-        ordinal_pos_loc = 0
-
         if len(self.column_schemas) != 0:
             # Read columns meta data
             column_types = list(self.packet.read(self.column_count))
             self.packet.read_length_coded_binary()
-            for i in range(0, len(column_types)):
+            ordinal_pos_loc = 0
+
+            for i in range(len(column_types)):
                 column_type = column_types[i]
                 try:
                     column_schema = self.column_schemas[ordinal_pos_loc]

@@ -312,7 +312,7 @@ class BinLogPacket:
         return struct.unpack("<q", self.read(8))[0]
 
     def unpack_uint16(self, n):
-        return struct.unpack("<H", n[0:2])[0]
+        return struct.unpack("<H", n[:2])[0]
 
     def unpack_int24(self, n):
         try:
@@ -457,9 +457,7 @@ class BinLogPacket:
         ]
 
         def _read(x):
-            if x[1] is None:
-                return x[2]
-            return self.read_binary_json_type(x[0], length)
+            return x[2] if x[1] is None else self.read_binary_json_type(x[0], length)
 
         return [_read(x) for x in values_type_offset_inline]
 

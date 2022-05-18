@@ -62,7 +62,7 @@ class GtidEvent(BinLogEvent):
         Eg: 3E11FA47-71CA-11E1-9E33-C80AA9429562:23
         See: http://dev.mysql.com/doc/refman/5.6/en/replication-gtids-concepts.html"""
         nibbles = binascii.hexlify(self.sid).decode("ascii")
-        gtid = "%s-%s-%s-%s-%s:%d" % (
+        return "%s-%s-%s-%s-%s:%d" % (
             nibbles[:8],
             nibbles[8:12],
             nibbles[12:16],
@@ -70,7 +70,6 @@ class GtidEvent(BinLogEvent):
             nibbles[20:],
             self.gno,
         )
-        return gtid
 
 
 class RotateEvent(BinLogEvent):

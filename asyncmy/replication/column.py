@@ -48,7 +48,7 @@ class Column:
             self.fsp = packet.read_uint8()
         elif self.type == TINY and column_schema["COLUMN_TYPE"] == "tinyint(1)":
             self.type_is_bool = True
-        elif self.type == VAR_STRING or self.type == STRING:
+        elif self.type in [VAR_STRING, STRING]:
             self._read_string_metadata(packet, column_schema)
         elif self.type == BLOB:
             self.length_size = packet.read_uint8()
@@ -68,7 +68,7 @@ class Column:
     def _read_string_metadata(self, packet, column_schema):
         metadata = (packet.read_uint8() << 8) + packet.read_uint8()
         real_type = metadata >> 8
-        if real_type == SET or real_type == ENUM:
+        if real_type in [SET, ENUM]:
             self.type = real_type
             self.size = metadata & 0x00FF
             self._read_enum_metadata(column_schema)
@@ -86,4 +86,4 @@ class Column:
 
     @property
     def data(self):
-        return dict((k, v) for (k, v) in self.__dict__.items() if not k.startswith("_"))
+        return {k: v for (k, v) in self.__dict__.items() if not k.startswith("_")}

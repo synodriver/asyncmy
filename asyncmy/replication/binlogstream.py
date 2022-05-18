@@ -193,8 +193,7 @@ class BinLogStream:
                 await cursor.execute(f"set @slave_uuid= '{self._slave_uuid}'")
             if self._slave_heartbeat:
                 heartbeat = float(min(MAX_HEARTBEAT / 2.0, self._slave_heartbeat))
-                if heartbeat > MAX_HEARTBEAT:
-                    heartbeat = MAX_HEARTBEAT
+                heartbeat = min(heartbeat, MAX_HEARTBEAT)
                 heartbeat = int(heartbeat * 1000000000)
                 await cursor.execute(f"set @master_heartbeat_period= {heartbeat}")
             await self._register_slave()

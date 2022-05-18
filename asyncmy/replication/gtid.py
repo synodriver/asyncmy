@@ -23,8 +23,8 @@ class Gtid:
         m = re.search("^([0-9]+)(?:-([0-9]+))?$", interval)
         if not m:
             raise ValueError("GTID format is incorrect: %r" % (interval,))
-        a = int(m.group(1))
-        b = int(m.group(2) or a)
+        a = int(m[1])
+        b = int(m[2] or a)
         return a, b + 1
 
     @staticmethod
@@ -36,8 +36,8 @@ class Gtid:
         if not m:
             raise ValueError("GTID format is incorrect: %r" % (gtid,))
 
-        sid = m.group(1)
-        intervals = m.group(2)
+        sid = m[1]
+        intervals = m[2]
 
         intervals_parsed = [Gtid.parse_interval(x) for x in intervals.split(":")[1:]]
 
@@ -51,10 +51,10 @@ class Gtid:
         new = []
 
         if itvl[0] > itvl[1]:
-            raise Exception("Malformed interval %s" % (itvl,))
+            raise Exception(f"Malformed interval {itvl}")
 
         if any(self.overlap(x, itvl) for x in self.intervals):
-            raise Exception("Overlapping interval %s" % (itvl,))
+            raise Exception(f"Overlapping interval {itvl}")
 
         # Merge: arrange interval to fit existing set
         for existing in sorted(self.intervals):
@@ -75,7 +75,7 @@ class Gtid:
         new = []
 
         if itvl[0] > itvl[1]:
-            raise Exception("Malformed interval %s" % (itvl,))
+            raise Exception(f"Malformed interval {itvl}")
 
         if not any(self.overlap(x, itvl) for x in self.intervals):
             # No raise
@@ -118,7 +118,7 @@ class Gtid:
         """Include the transactions of this gtid. Raise if the
         attempted merge has different SID"""
         if self.sid != other.sid:
-            raise Exception("Attempt to merge different SID" "%s != %s" % (self.sid, other.sid))
+            raise Exception(f"Attempt to merge different SID{self.sid} != {other.sid}")
 
         result = Gtid(str(self))
 
@@ -181,34 +181,28 @@ class Gtid:
     @classmethod
     def decode(cls, payload: BytesIO):
         sid = b""
-        sid = sid + binascii.hexlify(payload.read(4))
+        sid += binascii.hexlify(payload.read(4))
         sid = sid + b"-"
         sid = sid + binascii.hexlify(payload.read(2))
         sid = sid + b"-"
         sid = sid + binascii.hexlify(payload.read(2))
-        sid = sid + b"-"
-        sid = sid + binascii.hexlify(payload.read(2))
-        sid = sid + b"-"
-        sid = sid + binascii.hexlify(payload.read(6))
+        sid += b"-"
+        sid += binascii.hexlify(payload.read(2))
+        sid += b"-"
+        sid += binascii.hexlify(payload.read(6))
 
         (n_intervals,) = struct.unpack("<Q", payload.read(8))
         intervals = []
-        for i in range(0, n_intervals):
+        for _ in range(n_intervals):
             start, end = struct.unpack("<QQ", payload.read(16))
             intervals.append((start, end - 1))
 
         return cls(
-            "%s:%s"
-            % (
-                sid.decode("ascii"),
-                ":".join(["%d-%d" % x for x in intervals]),
-            )
+            f'{sid.decode("ascii")}:{":".join(["%d-%d" % x for x in intervals])}'
         )
 
     def __eq__(self, other):
-        if other.sid != self.sid:
-            return False
-        return self.intervals == other.intervals
+        return False if other.sid != self.sid else self.intervals == other.intervals
 
     def __lt__(self, other):
         if other.sid != self.sid:
@@ -287,7 +281,7 @@ class GtidSet:
     @classmethod
     def decode(cls, payload: BytesIO):
         (n_sid,) = struct.unpack("<Q", payload.read(8))
-        return cls(set(Gtid.decode(payload) for _ in range(0, n_sid)))
+        return cls({Gtid.decode(payload) for _ in range(n_sid)})
 
     def __eq__(self, other: "GtidSet"):  # type: ignore[override]
         return self._gtid_set == other._gtid_set
