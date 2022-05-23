@@ -13,7 +13,7 @@ packages = [
 ]
 readme = "README.md"
 repository = "https://github.com/long2ice/asyncmy.git"
-version = "0.2.4"
+version = "0.2.6"
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -30,6 +30,8 @@ mypy = "*"
 mysqlclient = "*"
 pymysql = "0.8.1"
 pytest = "*"
+rich = "*"
+pyproject-flake8 = "*"
 pytest-asyncio = "*"
 pytest-mock = "*"
 pytest-xdist = "*"
@@ -42,3 +44,13 @@ requires = ["poetry-core>=1.0.0", "setuptools", "cython"]
 [tool.black]
 line-length = 100
 target-version = ['py36', 'py37', 'py38', 'py39']
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+
+[tool.mypy]
+pretty = true
+ignore_missing_imports = true
+
+[tool.flake8]
+ignore = 'E501,W503,E203'

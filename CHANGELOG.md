@@ -2,9 +2,18 @@
 
 ## 0.2
 
+### 0.2.6
+
+- Fix raise_mysql_exception (#28)
+
+### 0.2.5
+
+- Revert `TIME` return `datetime.time` object. (#37)
+
 ### 0.2.4
 
 - Fix `escape_string` for enum type. (#30)
+- `TIME` return `datetime.time` object.
 
 ### 0.2.3
 
